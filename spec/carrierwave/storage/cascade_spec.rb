@@ -6,16 +6,109 @@ describe CarrierWave::Storage::Cascade do
 
   before do
     CarrierWave::Uploader::Base.configure do |config|
-      config.primary_storage = :fog
+      config.primary_storage   = :fog
       config.secondary_storage = :file
+      config.fog_directory     = 'path/to/fog/dir'
+      config.store_dir         = 'path/to/store/dir'
     end
   end
 
   subject(:cascade){ CarrierWave::Storage::Cascade.new(uploader) }
 
-  describe "#initialize" do
-    its(:primary_storage){ should be_a(CarrierWave::Storage::Fog)}
-    its(:secondary_storage){ should be_a(CarrierWave::Storage::File)}
+  context "when primary_storage and secondary_storage are Symbols" do
+    describe "#initialize" do
+      its(:primary_storage){ should be_a(CarrierWave::Storage::Fog)}
+      its(:secondary_storage){ should be_a(CarrierWave::Storage::File)}
+
+      it "should configure primary_storage with the main uploader" do
+        cascade.primary_storage.uploader.fog_directory.should eq('path/to/fog/dir')
+        cascade.primary_storage.uploader.store_dir.should eq('path/to/store/dir')
+      end
+
+      it "should configure secondary_storage with the main uploader" do
+        cascade.secondary_storage.uploader.fog_directory.should eq('path/to/fog/dir')
+        cascade.secondary_storage.uploader.store_dir.should eq('path/to/store/dir')
+      end
+    end
+  end
+
+  context "when primary_storage is a Hash and secondary_storage is a Symbol" do
+    before do
+      CarrierWave::Uploader::Base.configure do |config|
+        config.primary_storage = {
+          :storage => :fog,
+          :fog_directory => 'override'
+        }
+      end
+    end
+
+    describe "#initialize" do
+      its(:primary_storage){ should be_a(CarrierWave::Storage::Fog)}
+      its(:secondary_storage){ should be_a(CarrierWave::Storage::File)}
+
+      it "should configure primary_storage with a proxy uploader" do
+        cascade.primary_storage.uploader.fog_directory.should eq('override')
+        cascade.primary_storage.uploader.store_dir.should eq('path/to/store/dir')
+      end
+
+      it "should configure secondary_storage with the main uploader" do
+        cascade.secondary_storage.uploader.fog_directory.should eq('path/to/fog/dir')
+        cascade.secondary_storage.uploader.store_dir.should eq('path/to/store/dir')
+      end
+    end
+  end
+
+  context "when primary_storage is a Symbol and secondary_storage is a Hash" do
+    before do
+      CarrierWave::Uploader::Base.configure do |config|
+        config.secondary_storage = {:storage => :file, :store_dir => 'override'}
+      end
+    end
+
+    describe "#initialize" do
+      its(:primary_storage){ should be_a(CarrierWave::Storage::Fog)}
+      its(:secondary_storage){ should be_a(CarrierWave::Storage::File)}
+
+      it "should configure primary_storage with the main uploader" do
+        cascade.primary_storage.uploader.fog_directory.should eq('path/to/fog/dir')
+        cascade.primary_storage.uploader.store_dir.should eq('path/to/store/dir')
+      end
+
+      it "should configure secondary_storage with a proxy uploader" do
+        cascade.secondary_storage.uploader.fog_directory.should eq('path/to/fog/dir')
+        cascade.secondary_storage.uploader.store_dir.should eq('override')
+      end
+    end
+  end
+
+  context "when primary_storage and secondary_storage are Hashes" do
+    before do
+      CarrierWave::Uploader::Base.configure do |config|
+        config.primary_storage   = {
+          :storage       => :fog,
+          :fog_directory => 'fog override'
+        }
+        config.secondary_storage = {
+          :storage => :file,
+          :store_dir => 'file override'
+        }
+      end
+    end
+
+    describe "#initialize" do
+      its(:primary_storage){ should be_a(CarrierWave::Storage::Fog)}
+      its(:secondary_storage){ should be_a(CarrierWave::Storage::File)}
+
+      it "should configure primary_storage with a proxy uploader" do
+        cascade.primary_storage.uploader.fog_directory.should eq('fog override')
+        cascade.primary_storage.uploader.store_dir.should eq('path/to/store/dir')
+      end
+
+      it "should configure secondary_storage with a proxy uploader" do
+        cascade.secondary_storage.uploader.fog_directory.should eq('path/to/fog/dir')
+        cascade.secondary_storage.uploader.store_dir.should eq('file override')
+      end
+    end
   end
 
   describe "#store!" do

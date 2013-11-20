@@ -1,6 +1,7 @@
 require 'carrierwave'
 require 'carrierwave/cascade/version'
 require 'carrierwave/storage/cascade'
+require 'carrierwave/uploader/cascade'
 
 if defined?(CarrierWave::Storage::Fog::File)
   file = CarrierWave::Storage::Fog::File.new(nil,nil,nil)

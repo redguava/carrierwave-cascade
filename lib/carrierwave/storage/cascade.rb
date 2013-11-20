@@ -6,8 +6,8 @@ module CarrierWave
       def initialize(*args)
         super(*args)
 
-        @primary_storage    = get_storage(uploader.class.primary_storage).new(*args)
-        @secondary_storage  = get_storage(uploader.class.secondary_storage).new(*args)
+        @primary_storage   = get_storage(uploader.primary_storage)
+        @secondary_storage = get_storage(uploader.secondary_storage)
       end
 
       def store!(*args)
@@ -27,8 +27,26 @@ module CarrierWave
 
       private
 
-      def get_storage(storage = nil)
-        storage.is_a?(Symbol) ? eval(uploader.storage_engines[storage]) : storage
+      def get_storage(storage)
+        if storage.is_a?(Symbol)
+          storage_type = storage
+          uploader = self.uploader
+        else
+          storage_type = storage[:storage]
+          uploader = CarrierWave::Uploader::Cascade.new(self.uploader, storage)
+        end
+
+        storage_class(storage_type).new(uploader)
+      end
+
+      def storage_class(storage_type)
+        storage_type.is_a?(Symbol) ?
+          constantize(uploader.storage_engines[storage_type]) :
+          storage_type
+      end
+
+      def constantize(string)
+        string.split('::').reduce(Object, :const_get)
       end
 
       class SecondaryFileProxy

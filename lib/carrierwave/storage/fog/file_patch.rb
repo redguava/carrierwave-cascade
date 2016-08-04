@@ -1,4 +1,4 @@
- class CarrierWave::Storage::Fog::File
+class CarrierWave::Storage::Fog::File
   ##
   # Check if the file exists on the remote service
   #

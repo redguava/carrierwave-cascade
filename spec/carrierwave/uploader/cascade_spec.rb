@@ -16,15 +16,15 @@ describe CarrierWave::Uploader::Cascade do
   end
 
   it "overrides uploader settings using the settings hash" do
-    cascade_uploader.override_me.should eql(:overridden)
+    expect(cascade_uploader.override_me).to eql(:overridden)
   end
 
   it "inherits uploader settings not overridden the settings hash" do
-    cascade_uploader.inherit_me.should eql(:inherited)
+    expect(cascade_uploader.inherit_me).to eql(:inherited)
   end
 
   it "delegates to the upstream uploader for unknown methods" do
-    uploader.should_receive(:delegated).with('argument')
+    expect(uploader).to receive(:delegated).with('argument')
     cascade_uploader.delegated('argument')
   end
 end

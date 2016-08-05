@@ -50,7 +50,6 @@ module CarrierWave
       end
 
       class SecondaryFileProxy
-
         attr_reader :real_file
 
         def initialize(uploader, real_file)
@@ -70,11 +69,14 @@ module CarrierWave
           real_file.send(*args, &block)
         end
 
+        def method(name)
+          real_file.method(name)
+        end
+
         def respond_to?(*args)
           @real_file.respond_to?(*args)
         end
       end
-
     end
   end
 end

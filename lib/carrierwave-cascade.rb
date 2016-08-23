@@ -1,3 +1,4 @@
+require 'delegate'
 require 'carrierwave'
 require 'carrierwave/cascade/version'
 require 'carrierwave/storage/cascade'

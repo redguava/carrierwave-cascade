@@ -49,32 +49,18 @@ module CarrierWave
         string.split('::').reduce(Object, :const_get)
       end
 
-      class SecondaryFileProxy
-        attr_reader :real_file
+      class SecondaryFileProxy < ::SimpleDelegator
+        alias real_file __getobj__
+        private :__setobj__
 
         def initialize(uploader, real_file)
           @uploader = uploader
-          @real_file = real_file
+          __setobj__(real_file)
         end
 
         def delete
-          if true === @uploader.allow_secondary_file_deletion
-            return real_file.delete
-          else
-            return true
-          end
-        end
-
-        def method_missing(*args, &block)
-          real_file.send(*args, &block)
-        end
-
-        def method(name)
-          real_file.method(name)
-        end
-
-        def respond_to?(*args)
-          @real_file.respond_to?(*args)
+          return real_file.delete if @uploader.allow_secondary_file_deletion
+          true
         end
       end
     end

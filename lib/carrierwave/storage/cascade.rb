@@ -1,13 +1,14 @@
 module CarrierWave
   module Storage
     class Cascade < Abstract
-      attr_reader :primary_storage, :secondary_storage
+      attr_reader :primary_storage, :secondary_storage, :enable_cascade
 
       def initialize(*args)
         super(*args)
 
         @primary_storage   = get_storage(uploader.primary_storage)
         @secondary_storage = get_storage(uploader.secondary_storage)
+        @enable_cascade = uploader.enable_cascade
       end
 
       def store!(*args)
@@ -16,13 +17,10 @@ module CarrierWave
 
       def retrieve!(*args)
         primary_file = primary_storage.retrieve!(*args)
+        return primary_file unless enable_cascade && !primary_file.exists?
 
-        if !primary_file.exists?
-          secondary_file = secondary_storage.retrieve!(*args)
-          return SecondaryFileProxy.new(uploader, secondary_file)
-        else
-          return primary_file
-        end
+        secondary_file = secondary_storage.retrieve!(*args)
+        SecondaryFileProxy.new(uploader, secondary_file)
       end
 
       private

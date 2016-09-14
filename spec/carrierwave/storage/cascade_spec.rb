@@ -168,46 +168,91 @@ describe CarrierWave::Storage::Cascade do
       allow(cascade.secondary_storage).to receive_messages(:retrieve! => secondary_file)
     end
 
-    context "when file exists in primary_storage" do
-      before do
-        allow(primary_file).to receive_messages(:exists? => true)
-      end
-
-      context "when file exists in secondary_storage" do
+    context "when cascading is enabled" do
+      context "when file exists in primary_storage" do
         before do
-          allow(secondary_file).to receive_messages(:exists? => true)
+          allow(primary_file).to receive_messages(:exists? => true)
         end
 
-        it "returns the primary_file" do
-          expect(cascade.retrieve!('file')).to eq(primary_file)
+        context "when file exists in secondary_storage" do
+          before do
+            allow(secondary_file).to receive_messages(:exists? => true)
+          end
+
+          it "returns the primary_file" do
+            expect(cascade.retrieve!('file')).to eq(primary_file)
+          end
+        end
+
+        context "when file doesn't exist in secondary_storage" do
+          before do
+            allow(secondary_file).to receive_messages(:exists? => false)
+          end
+
+          it "returns the primary_file" do
+            expect(cascade.retrieve!('file')).to eq(primary_file)
+          end
         end
       end
 
-      context "when file doesn't exist in secondary_storage" do
+      context "when file doesn't exist in primary_storage" do
         before do
-          allow(secondary_file).to receive_messages(:exists? => false)
+          allow(primary_file).to receive_messages(:exists? => false)
         end
 
-        it "returns the primary_file" do
-          expect(cascade.retrieve!('file')).to eq(primary_file)
+        it "returns a secondary_file proxy" do
+          expect(cascade.retrieve!('file'))
+            .to be_a(CarrierWave::Storage::Cascade::SecondaryFileProxy)
+        end
+
+        it "returns a proxy to the real secondary_file" do
+          expect(cascade.retrieve!('file').real_file).to eq(secondary_file)
         end
       end
-
     end
 
-    context "when file doesn't exist in primary_storage" do
+    context "when cascading is disabled" do
       before do
-        allow(primary_file).to receive_messages(:exists? => false)
+        CarrierWave::Uploader::Base.configure do |config|
+          config.enable_cascade = false
+        end
       end
 
-      it "returns a secondary_file proxy" do
-        expect(cascade.retrieve!('file')).to be_a(CarrierWave::Storage::Cascade::SecondaryFileProxy)
+      context "when the file exists in primary storage" do
+        before do
+          allow(primary_file).to receive_messages(:exists? => true)
+        end
+
+        context "when file exists in secondary_storage" do
+          before do
+            allow(secondary_file).to receive_messages(:exists? => true)
+          end
+
+          it "returns the primary_file" do
+            expect(cascade.retrieve!('file')).to eq(primary_file)
+          end
+        end
+
+        context "when file doesn't exist in secondary_storage" do
+          before do
+            allow(secondary_file).to receive_messages(:exists? => false)
+          end
+
+          it "returns the primary_file" do
+            expect(cascade.retrieve!('file')).to eq(primary_file)
+          end
+        end
       end
 
-      it "returns a proxy to the real secondary_file" do
-        expect(cascade.retrieve!('file').real_file).to eq(secondary_file)
-      end
+      context "and file doesn't exist in primary_storage" do
+        before do
+          allow(primary_file).to receive_messages(:exists? => false)
+        end
 
+        it "returns the primary file" do
+          expect(cascade.retrieve!('file')).to eq(primary_file)
+        end
+      end
     end
   end
 end

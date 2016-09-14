@@ -15,8 +15,10 @@ class CarrierWave::Uploader::Base
   add_config :primary_storage
   add_config :secondary_storage
   add_config :allow_secondary_file_deletion
+  add_config :enable_cascade
 
   configure do |config|
     config.storage_engines[:cascade] = 'CarrierWave::Storage::Cascade'
+    config.enable_cascade = true
   end
 end

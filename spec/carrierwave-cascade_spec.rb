@@ -4,6 +4,7 @@ describe CarrierWave::Uploader::Base do
   it { is_expected.to respond_to :primary_storage }
   it { is_expected.to respond_to :secondary_storage }
   it { is_expected.to respond_to :allow_secondary_file_deletion }
+  it { is_expected.to respond_to :enable_cascade }
 
   describe '#storage_engines' do
     subject { super().storage_engines }
